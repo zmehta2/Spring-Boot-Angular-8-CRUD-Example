@@ -1,36 +1,31 @@
 services:
   mysqldb:
     image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_DATABASE: users_database
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
-    volumes:
-      - my-db:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: mysqldb
     ports:
-      - 3306:3306
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 40s
+      - 3307:3306
+    environment:
+        MYSQL_DATABASE: users_database
+        MYSQL_ROOT_PASSWORD: root
+    volumes:
+        - mysql_data:/var/lib/mysql
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
+
   backend:
     build: ./springboot2-jpa-crud-example  # This should point to your backend project folder
     container_name: backend
     restart: always
-    ports:
-      - "8080:8080"
     environment:
       MYSQL_HOST: mysqldb
       MYSQL_USER: root
-      MYSQL_PASSWORD: ""
+      MYSQL_PASSWORD: root
       MYSQL_PORT: 3306
     networks:
       - app-network
+    ports:
+        - "8080:8080"
 
   frontend:
     build: ./angular8-springboot-client
@@ -38,7 +33,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "4200:4200"
+      - "4200:80"
     networks:
       - app-network
 
@@ -47,4 +42,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+    mysql_data:
