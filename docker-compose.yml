@@ -1,15 +1,23 @@
 services:
   mysqldb:
     image: mysql:8.0
-    container_name: mysqldb
-    ports:
-      - 3307:3306
+    restart: always
     environment:
-        MYSQL_DATABASE: users_database
-        MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: users_database
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    volumes:
+      - my-db:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     networks:
       - app-network
-
   backend:
     build: ./springboot2-jpa-crud-example  # This should point to your backend project folder
     container_name: backend
@@ -19,7 +27,7 @@ services:
     environment:
       MYSQL_HOST: mysqldb
       MYSQL_USER: root
-      MYSQL_PASSWORD: root
+      MYSQL_PASSWORD: ""
       MYSQL_PORT: 3306
     networks:
       - app-network
